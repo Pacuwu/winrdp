@@ -1,43 +1,44 @@
-name: Windows Server 2022 with Chrome, VLC and RDP via Ngrok
+name: Windows Server 2022 - RDP con Chrome, VLC y Ngrok
 
 on:
   workflow_dispatch:
 
 jobs:
-  windows-rdp:
+  rdp-windows:
     runs-on: windows-latest
     timeout-minutes: 360 # 6 horas
     steps:
-      - name: 🧰 Preparar usuario RDP
-        run: |
-          net user itzy 1tZy123! /add
-          net localgroup administrators itzy /add
-          reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        shell: powershell
 
-      - name: 🌐 Instalar Google Chrome
-        run: |
-          Invoke-WebRequest "https://dl.google.com/chrome/install/375.126/chrome_installer.exe" -OutFile chrome_installer.exe
-          Start-Process chrome_installer.exe -Wait
-        shell: powershell
+    - name: 👤 Crear usuario RDP
+      run: |
+        net user itzy 1tZy123! /add
+        net localgroup administrators itzy /add
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+      shell: powershell
 
-      - name: 🎞 Instalar VLC Player
-        run: |
-          Invoke-WebRequest "https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe" -OutFile vlc_installer.exe
-          Start-Process vlc_installer.exe -ArgumentList "/L=1033 /S" -Wait
-        shell: powershell
+    - name: 🌐 Instalar Google Chrome (offline MSI)
+      run: |
+        Invoke-WebRequest "https://dl.google.com/chrome/install/GoogleChromeStandaloneEnterprise64.msi" -OutFile chrome.msi
+        Start-Process msiexec.exe -ArgumentList "/i chrome.msi /qn" -Wait
+      shell: powershell
 
-      - name: 📦 Descargar Ngrok
-        run: |
-          Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -DestinationPath .
-        shell: powershell
+    - name: 🎞 Instalar VLC Player
+      run: |
+        Invoke-WebRequest "https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe" -OutFile vlc_installer.exe
+        Start-Process vlc_installer.exe -ArgumentList "/L=1033 /S" -Wait
+      shell: powershell
 
-      - name: 🔑 Autenticarse en Ngrok
-        run: .\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-        shell: powershell
+    - name: 📦 Descargar Ngrok
+      run: |
+        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip -DestinationPath .
+      shell: powershell
 
-      - name: 🚪 Exponer puerto RDP con Ngrok
-        run: .\ngrok.exe tcp 3389
-        shell: powershell
+    - name: 🔐 Autenticarse con Ngrok
+      run: .\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+      shell: powershell
+
+    - name: 🚪 Iniciar túnel RDP (Ngrok)
+      run: .\ngrok.exe tcp 3389
+      shell: powershell

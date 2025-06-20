@@ -20,8 +20,8 @@ jobs:
 
     - name: 📦 Descargar Ngrok
       run: |
-        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-        Expand-Archive ngrok.zip -DestinationPath .
+       Invoke-WebRequest https://bin.ngrok.com/ngrok/ngrok.exe -OutFile ngrok.exe
+       -DestinationPath .
       shell: powershell
 
     - name: 🔐 Autenticarse con Ngrok

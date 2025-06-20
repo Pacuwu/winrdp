@@ -16,10 +16,10 @@ jobs:
         reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
       shell: powershell
-
     - name: 📦 Descargar Ngrok v3
       run: |
-        Invoke-WebRequest https://bin.ngrok.com/ngrok/ngrok.exe -OutFile ngrok.exe
+        Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip -DestinationPath .
       shell: powershell
 
     - name: 🔐 Autenticarse con Ngrok
@@ -29,4 +29,5 @@ jobs:
     - name: 🚪 Iniciar túnel RDP con Ngrok
       run: .\ngrok.exe tcp 3389
       shell: powershell
+
 

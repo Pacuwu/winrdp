@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: 🧰 Preparar usuario RDP
         run: |
-          net user itzy Itzy2025! /add
+          net user itzy ItzySuperSecure2025! /add
           net localgroup administrators itzy /add
           reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"

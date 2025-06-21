@@ -4,19 +4,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  start-rdp:
     runs-on: windows-latest
 
     steps:
-      - name: Downloading & Setting Up
+      - name: Descargar y preparar entorno
+        shell: powershell
         run: |
-         echo "EMAIL_SECRET=aminayoscardj@gmail.com" > secrets.txt
-         echo "PASSWORD_SECRET=Lynaescoqueta123!" >> secrets.txt
-         Invoke-WebRequest -Uri "https://www.dropbox.com/sh/l567nu2ff84q4dr/AACTILIbK9bi5yQLtp221pTJa/down.bat?dl=1" -OutFile "down.bat"
-         cmd /c down.bat
-          
-      - name: Login Details
-        run: cmd /c show.bat
+          # Guardar "secretos" (no es seguro dejarlos en texto plano)
+          Set-Content -Path secrets.txt -Value "EMAIL_SECRET=aminayoscardj@gmail.com`nPASSWORD_SECRET=Lynaescoqueta123!"
 
-      - name: Time Counter
-        run: Start-Sleep -Seconds 14600
+          # Descargar el archivo .bat desde Dropbox
+          Invoke-WebRequest -Uri "https://dl.dropboxusercontent.com/scl/fi/xyz123/down.bat?rlkey=..." -OutFile "down.bat"
+
+          # Comprobar si se descargó
+          if (!(Test-Path "down.bat")) {
+            Write-Error "No se pudo descargar down.bat"
+            exit 1
+          }
+
+          # Ejecutar el archivo .bat descargado
+          Start-Process "cmd.exe" -ArgumentList "/c down.bat" -Wait
+
+      - name: Mostrar credenciales
+        shell: cmd
+        run: show.bat
+
+      - name: Mantener activo el entorno (4h)
+        shell: powershell
+        run: Start-Sleep -Seconds 14400

@@ -8,25 +8,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Guardar secretos (no seguro, solo ejemplo)
+      - name: Downloading & Setting Up
         run: |
-          echo "EMAIL_SECRET=aminayoscardj@gmail.com" > secrets.txt
-          echo "PASSWORD_SECRET=Lynaescoqueta123!" >> secrets.txt
+         echo "EMAIL_SECRET=Your Anyviewer Mail" > secrets.txt
+         echo "PASSWORD_SECRET=YOur AnyViewer Pass" >> secrets.txt
+         Invoke-WebRequest -Uri "https://www.dropbox.com/sh/l567nu2ff84q4dr/AACTILIbK9bi5yQLtp221pTJa/down.bat?dl=1" -OutFile "down.bat"
+         cmd /c down.bat
+          
+      - name: Login Details
+        run: cmd /c show.bat
 
-      - name: Descargar y ejecutar down.bat
-        shell: powershell
-        run: |
-          Invoke-WebRequest -Uri "https://dl.dropboxusercontent.com/scl/fi/6zlwu8owapyc1tltj91hc/down.bat?rlkey=uem7o9kk7orpil7io6wkc135u&st=uoxbsqyf" -OutFile "down.bat"
-          if (!(Test-Path "down.bat")) {
-            Write-Error "❌ No se pudo descargar down.bat"
-            exit 1
-          }
-          Start-Process "cmd.exe" -ArgumentList "/c down.bat" -Wait
-
-      - name: Mostrar detalles de inicio de sesión
-        shell: cmd
-        run: show.bat
-
-      - name: Mantener vivo el entorno por 4 horas
-        shell: powershell
-        run: Start-Sleep -Seconds 14400
+      - name: Time Counter
+        run: Start-Sleep -Seconds 14600

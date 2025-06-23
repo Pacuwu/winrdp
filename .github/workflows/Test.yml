@@ -1,1 +1,47 @@
+name: Windows RDP 6h Auto-Restart
+
+on:
+  workflow_dispatch:
+
+jobs:
+  start-windows-rdp:
+    runs-on: windows-latest
+    timeout-minutes: 360  # 6 horas
+
+    steps:
+      - name: Mostrar mensaje de inicio
+        run: echo "Iniciando Windows con RDP y Ngrok por 6 horas..."
+
+      - name: Instalar Ngrok y configurar RDP
+        run: |
+          Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive ngrok.zip
+          .\ngrok\ngrok.exe config add-authtoken $env:NGROK_AUTH_TOKEN
+          net user runneradmin MyPassword123!
+          Add-WindowsCapability -Online -Name "Microsoft.Windows.Server.RemoteDesktop.Client~~~~0.0.1.0"
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          .\ngrok\ngrok.exe tcp 3389 > ngrok.log &
+
+      - name: Mostrar IP RDP
+        run: |
+          Start-Sleep -Seconds 10
+          $url = (Get-Content ngrok.log | Select-String -Pattern "tcp://.*" | Select-Object -Last 1).ToString().Split("tcp://")[1]
+          echo "====================================="
+          echo "🔐 Usuario: runneradmin"
+          echo "🔐 Contraseña: MyPassword123!"
+          echo "🔗 Dirección RDP (copiar en Escritorio Remoto): $url"
+          echo "====================================="
+
+      - name: Esperar 6 horas
+        run: Start-Sleep -Seconds 21600
+
+      - name: Reiniciar workflow automáticamente
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $uri = "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}.yml/dispatches"
+          $body = '{"ref":"main"}'
+          $headers = @{Authorization = "token $env:GITHUB_TOKEN"}
+          Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body -ContentType 'application/json'
 

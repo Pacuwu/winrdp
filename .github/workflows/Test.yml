@@ -6,7 +6,7 @@ on:
 jobs:
   start-windows-rdp:
     runs-on: windows-latest
-    timeout-minutes: 360  # 6 horas
+    timeout-minutes: 360
 
     steps:
       - name: Mostrar mensaje de inicio
@@ -18,20 +18,33 @@ jobs:
           Expand-Archive ngrok.zip
           .\ngrok\ngrok.exe config add-authtoken $env:NGROK_AUTH_TOKEN
           net user runneradmin MyPassword123!
-          Add-WindowsCapability -Online -Name "Microsoft.Windows.Server.RemoteDesktop.Client~~~~0.0.1.0"
           Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          .\ngrok\ngrok.exe tcp 3389 > ngrok.log &
+          Start-Process -NoNewWindow -FilePath ".\ngrok\ngrok.exe" -ArgumentList "tcp 3389" -RedirectStandardOutput "ngrok.log"
 
-      - name: Mostrar IP RDP
+      - name: Esperar y extraer IP pública de Ngrok
         run: |
-          Start-Sleep -Seconds 10
-          $url = (Get-Content ngrok.log | Select-String -Pattern "tcp://.*" | Select-Object -Last 1).ToString().Split("tcp://")[1]
-          echo "====================================="
-          echo "🔐 Usuario: runneradmin"
-          echo "🔐 Contraseña: MyPassword123!"
-          echo "🔗 Dirección RDP (copiar en Escritorio Remoto): $url"
-          echo "====================================="
+          $retries = 0
+          while ($retries -lt 30) {
+            Start-Sleep -Seconds 5
+            if (Test-Path "ngrok.log") {
+              $match = Select-String -Path ngrok.log -Pattern "tcp://.*" | Select-Object -Last 1
+              if ($match) {
+                $url = $match.ToString().Split("tcp://")[1]
+                echo "====================================="
+                echo "🔐 Usuario: runneradmin"
+                echo "🔐 Contraseña: MyPassword123!"
+                echo "🔗 Dirección RDP: $url"
+                echo "====================================="
+                break
+              }
+            }
+            $retries++
+          }
+          if (-not $url) {
+            Write-Error "❌ No se pudo obtener la IP de Ngrok"
+            exit 1
+          }
 
       - name: Esperar 6 horas
         run: Start-Sleep -Seconds 21600
@@ -44,4 +57,3 @@ jobs:
           $body = '{"ref":"main"}'
           $headers = @{Authorization = "token $env:GITHUB_TOKEN"}
           Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body -ContentType 'application/json'
-
